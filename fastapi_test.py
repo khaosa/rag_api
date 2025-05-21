@@ -160,7 +160,9 @@ IMPORTANT INSTRUCTIONS:
           "place": "string",
           "description": "string",
           "duration": "string",
-          "notes": "string (optional)"
+          "notes": "string (optional)",
+          "place_label": "string (should be a name that corresponds to the user preferred activities)",
+          "parent_label": "string (should be a name that corresponds to the user preferred activities, if a parent exists in the db)",
         }}
       ]
     }}
@@ -212,15 +214,25 @@ async def generate_itinerary(request: TripRequest):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        placeholders = ', '.join(['%s'] * len(request.preferences))
-        query = """SELECT DISTINCT p.*
-           FROM places p
-           JOIN places_labels pl ON p.id = pl.place_id
-           JOIN labels l ON pl.label_id = l.id
-           WHERE p.city = %s
-           AND l.label_name IN ({})""".format(placeholders)
-
-        params = [request.destination] + request.preferences
+        placeholders = ', '.join(['%s'] * len(request.traveler_preferences))
+        query = f"""
+            SELECT DISTINCT p.*
+            FROM places p
+            JOIN places_labels pl ON p.id = pl.place_id
+            JOIN labels l ON pl.label_id = l.id
+            WHERE p.city = %s
+            AND (
+                l.label_name IN ({placeholders})  -- Direct matches
+                OR 
+                l.parent_id IN (
+                    SELECT l.id
+                    FROM labels l 
+                    WHERE l.label_name IN ({placeholders})  -- Parent matches
+                )
+                )
+                """
+        # Double the parameters for both direct and parent matches
+        params = [request.destination] + request.traveler_preferences + request.traveler_preferences
         cursor.execute(query, params)
 
         columns = [col[0] for col in cursor.description]
