@@ -211,8 +211,18 @@ async def generate_itinerary(request: TripRequest):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        query = "SELECT * FROM places WHERE city = %s"
-        cursor.execute(query, (request.destination,))
+        
+        placeholders = ', '.join(['%s'] * len(request.preferences))
+        query = """SELECT DISTINCT p.*
+           FROM places p
+           JOIN places_labels pl ON p.id = pl.place_id
+           JOIN labels l ON pl.label_id = l.id
+           WHERE p.city = %s
+           AND l.label_name IN ({})""".format(placeholders)
+
+        params = [request.destination] + request.preferences
+        cursor.execute(query, params)
+
         columns = [col[0] for col in cursor.description]
         rows = cursor.fetchall()
         cursor.close()
