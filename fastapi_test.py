@@ -161,8 +161,8 @@ IMPORTANT INSTRUCTIONS:
           "description": "string",
           "duration": "string",
           "notes": "string (optional)",
-          "place_label": "string (should be a name that corresponds to the user preferred activities)",
-          "parent_label": "string (should be a name that corresponds to the user preferred activities, if a parent exists in the db)",
+          "place_label": "string (should be the place_label of the place coming from places array sent to in the prompt)",
+          "parent_label": "string (should be the parent_label of the place coming from places array sent to in the prompt)",
         }}
       ]
     }}
@@ -216,11 +216,14 @@ async def generate_itinerary(request: TripRequest):
         
         placeholders = ', '.join(['%s'] * len(request.traveler_preferences))
         query = f"""
-            SELECT DISTINCT p.*
+            SELECT DISTINCT p.id, p.name, p.longitude, p.latitude, p.city, p.country, p.country_id, p.open_hours, p.rating, 
+            p.number_of_ratings, p.created_at, p.updated_at, p.website, p.phone, p.price_range, pl.place_id, pl.label_id,
+            l.label_name as place_label, l.parent_id, l2.label_name as parent_label
             FROM places p
             JOIN places_labels pl ON p.id = pl.place_id
             JOIN labels l ON pl.label_id = l.id
-            WHERE p.city = %s
+            JOIN labels l2 ON l.parent_id = l2.id
+            WHERE p.city = %s 
             AND (
                 l.label_name IN ({placeholders})  -- Direct matches
                 OR 
@@ -231,7 +234,6 @@ async def generate_itinerary(request: TripRequest):
                 )
                 )
                 """
-        # Double the parameters for both direct and parent matches
         params = [request.destination] + request.traveler_preferences + request.traveler_preferences
         cursor.execute(query, params)
 
