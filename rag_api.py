@@ -163,6 +163,8 @@ IMPORTANT INSTRUCTIONS:
           "notes": "string (optional)",
           "place_label": "string (should be the place_label of the place coming from places array sent to in the prompt)",
           "parent_label": "string (should be the parent_label of the place coming from places array sent to in the prompt)",
+          "latitude": decimal number (should be the latitude of the place coming from places array sent to in the prompt),
+          "longitude": decimal number (should be the longitude of the place coming from places array sent to in the prompt),
         }}
       ]
     }}
