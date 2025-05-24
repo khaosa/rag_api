@@ -165,6 +165,7 @@ IMPORTANT INSTRUCTIONS:
           "parent_label": "string (should be the parent_label of the place coming from places array sent to in the prompt)",
           "latitude": decimal number (should be the latitude of the place coming from places array sent to in the prompt),
           "longitude": decimal number (should be the longitude of the place coming from places array sent to in the prompt),
+          "image_url": string (should be the image_url of the place coming from places array sent to in the prompt),
         }}
       ]
     }}
@@ -220,12 +221,13 @@ async def generate_itinerary(request: TripRequest):
         query = f"""
             SELECT DISTINCT p.id, p.name, p.longitude, p.latitude, p.city, p.country, p.country_id, p.open_hours, p.rating, 
             p.number_of_ratings, p.created_at, p.updated_at, p.website, p.phone, p.price_range, pl.place_id, pl.label_id,
-            l.label_name as place_label, l.parent_id, l2.label_name as parent_label
+            l.label_name as place_label, l.parent_id, l2.label_name as parent_label, pli.img_url as image_url
             FROM places p
             JOIN places_labels pl ON p.id = pl.place_id
+            JOIN places_images pli on p.id = pli.place_id 
             JOIN labels l ON pl.label_id = l.id
             JOIN labels l2 ON l.parent_id = l2.id
-            WHERE p.city = %s 
+            WHERE p.city = %s
             AND (
                 l.label_name IN ({placeholders})  -- Direct matches
                 OR 
