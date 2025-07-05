@@ -141,7 +141,8 @@ IMPORTANT INSTRUCTIONS:
 - For slow-paced: fewer activities with more room for rest and exploration. The number of places to visit must be at least 3.
 5. Always consider reasonable transportation time between places, especially for fast-paced itineraries, to avoid unrealistic schedules.
 6. Do not return the same place more than once.
-7. Follow this exact structure:
+7. If possible, return at least one place for each user preference.
+8. Follow this exact structure:
 
 {{
   "trip_name": "string",
@@ -244,10 +245,40 @@ async def generate_itinerary(request: TripRequest):
 
         columns = [col[0] for col in cursor.description]
         rows = cursor.fetchall()
+        places = [serialize_row(dict(zip(columns, row))) for row in rows]
+
+        # If not enough places, run a broader query
+        min_places = 3 * request.duration_days
+        if len(places) < min_places:
+            # Example: fetch more places from the same country, regardless of label
+            cursor.execute(
+                """
+                SELECT DISTINCT p.id, p.name, p.longitude, p.latitude, p.city, p.country, p.country_id, p.open_hours, p.rating, 
+                p.number_of_ratings, p.created_at, p.updated_at, p.website, p.phone, p.price_range, pl.place_id, pl.label_id,
+                l.label_name as place_label, l.parent_id, l2.label_name as parent_label, pli.img_url as image_url
+                FROM places p
+                JOIN places_labels pl ON p.id = pl.place_id
+                JOIN places_images pli on p.id = pli.place_id 
+                JOIN labels l ON pl.label_id = l.id
+                JOIN labels l2 ON l.parent_id = l2.id
+                WHERE p.city = %s
+                """,
+                [request.destination]
+            )
+            extra_rows = cursor.fetchall()
+            extra_places = [serialize_row(dict(zip(columns, row))) for row in extra_rows]
+            # Add only new places (avoid duplicates)
+            existing_ids = {p['id'] for p in places}
+            for place in extra_places:
+                if place['id'] not in existing_ids:
+                    places.append(place)
+                    existing_ids.add(place['id'])
+                if len(places) >= min_places:
+                    break
+
         cursor.close()
         conn.close()
 
-        places = [serialize_row(dict(zip(columns, row))) for row in rows]
         print(places)
         print("END OF PLACES")
         itinerary = planner.generate_trip_plan(
