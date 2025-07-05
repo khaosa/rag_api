@@ -32,7 +32,7 @@ def get_db_connection():
         user=MYSQL_USER,
         password=MYSQL_PASSWORD,
         database=MYSQL_DATABASE,
-        port=3307
+        port=3306
     )
 
 app = FastAPI(
