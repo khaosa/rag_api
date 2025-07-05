@@ -136,11 +136,12 @@ IMPORTANT INSTRUCTIONS:
 2. Do not include any text outside the JSON object
 3. Escape all special characters
 4. Please adjust the number of activities and free time based on the selected pace:
-- For fast-paced trips: include more activities with minimal but realistic breaks for transportation and rest.
-- For moderate pace: balance activities and free time reasonably.
-- For slow-paced: fewer activities with more room for rest and exploration.
-5.Always consider reasonable transportation time between places, especially for fast-paced itineraries, to avoid unrealistic schedules.
-6. Follow this exact structure:
+- For fast-paced trips: include more activities with minimal but realistic breaks for transportation and rest. The number of places to visit must be at least 7.
+- For moderate pace: balance activities and free time reasonably. The number of places to visit must be at least 5.
+- For slow-paced: fewer activities with more room for rest and exploration. The number of places to visit must be at least 3.
+5. Always consider reasonable transportation time between places, especially for fast-paced itineraries, to avoid unrealistic schedules.
+6. Do not return the same place more than once.
+7. Follow this exact structure:
 
 {{
   "trip_name": "string",
